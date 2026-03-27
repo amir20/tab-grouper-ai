@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Tab Grouper AI",
+  "version": "0.1.0",
+  "description": "Automatically group your tabs using a local AI model — no server required.",
+  "permissions": [
+    "tabs",
+    "tabGroups",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://huggingface.co/*",
+    "https://*.huggingface.co/*"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
+  "background": {
+    "service_worker": "src/service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "src/popup.html",
+    "default_title": "Tab Grouper AI",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  }
+}

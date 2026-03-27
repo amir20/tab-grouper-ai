@@ -1,0 +1,17 @@
+{
+  "name": "tab-grouper-ai",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Chrome extension that groups tabs using an in-browser LLM via WebLLM",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@mlc-ai/web-llm": "^0.2.82"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "vite-plugin-web-extension": "^4.5.0"
+  }
+}
