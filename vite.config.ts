@@ -3,7 +3,7 @@ import webExtension from "vite-plugin-web-extension";
 
 export default defineConfig({
   base: "",
-  plugins: [webExtension()],
+  plugins: [webExtension({ disableAutoLaunch: true })],
   build: {
     outDir: "dist",
     emptyOutDir: true,
