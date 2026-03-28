@@ -8,10 +8,14 @@ import {
   buildTabPrompt,
   remapTabIds,
   extractJson,
-  getModel,
+  getProviderConfig,
+  saveProviderConfig,
   toMessage,
   type TabGroup,
+  type Provider,
+  type ProviderConfig,
 } from "../config";
+import { chatCompletion } from "../openrouter";
 
 export type Status = "loading" | "ready" | "error" | "working";
 
@@ -22,11 +26,16 @@ export function useEngine() {
   const statusText = ref("Initializing...");
   const error = ref("");
   const currentModel = ref("");
+  const currentProvider = ref<Provider>("local");
   const progress = ref({ visible: false, pct: 0, label: "" });
 
-  const modelBadge = computed(() =>
-    currentModel.value.split("-").slice(0, 3).join("-").toLowerCase()
-  );
+  const modelBadge = computed(() => {
+    if (currentProvider.value === "openrouter") {
+      // Show last segment: "google/gemini-2.5-flash" → "gemini-2.5-flash"
+      return currentModel.value.split("/").pop() || currentModel.value;
+    }
+    return currentModel.value.split("-").slice(0, 3).join("-").toLowerCase();
+  });
 
   function setStatus(s: Status, text: string) {
     status.value = s;
@@ -43,8 +52,21 @@ export function useEngine() {
   }
 
   async function init(): Promise<void> {
-    const model = await getModel();
-    currentModel.value = model;
+    const config = await getProviderConfig();
+    currentProvider.value = config.provider;
+
+    if (config.provider === "openrouter") {
+      currentModel.value = config.openrouterModel;
+      if (!config.openrouterApiKey) {
+        setError("OpenRouter API key not set. Click Model to configure.");
+        return;
+      }
+      setStatus("ready", "OpenRouter ready");
+      return;
+    }
+
+    // Local WebLLM
+    currentModel.value = config.model;
     setStatus("loading", "Loading model...");
 
     if (engine) {
@@ -52,7 +74,7 @@ export function useEngine() {
       engine = null;
     }
 
-    engine = await CreateExtensionServiceWorkerMLCEngine(model, {
+    engine = await CreateExtensionServiceWorkerMLCEngine(config.model, {
       initProgressCallback: ({ progress: p, text }) => {
         const pct = Math.round((p ?? 0) * 100);
         progress.value = { visible: true, pct, label: text || "Downloading model..." };
@@ -64,40 +86,50 @@ export function useEngine() {
     setStatus("ready", "Model ready");
   }
 
-  async function switchModel(model: string): Promise<void> {
-    if (model === currentModel.value) return;
-    await chrome.storage.local.set({ model });
+  async function applyConfig(config: Partial<ProviderConfig>): Promise<void> {
+    await saveProviderConfig(config);
     engine = null;
     await init();
   }
 
   async function groupTabs(tabs: chrome.tabs.Tab[], retried = false): Promise<TabGroup[]> {
-    if (!engine) throw new Error("Engine not initialized");
-
     const { prompt: tabList, idMap } = buildTabPrompt(tabs);
+    const messages: { role: "system" | "user"; content: string }[] = [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: `Here are my open tabs:\n${tabList}\n\nGroup them:` },
+    ];
 
-    let reply;
-    try {
-      reply = await engine.chat.completions.create({
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: `Here are my open tabs:\n${tabList}\n\nGroup them:` },
-        ],
+    let raw: string;
+
+    if (currentProvider.value === "openrouter") {
+      const config = await getProviderConfig();
+      if (!config.openrouterApiKey) throw new Error("OpenRouter API key not configured");
+      raw = await chatCompletion(config.openrouterApiKey, config.openrouterModel, messages, {
         temperature: 0.3,
         max_tokens: 1024,
       });
-    } catch (err) {
-      const msg = toMessage(err);
-      if (!retried && (msg.includes("Model not loaded") || msg.includes("BindingError"))) {
-        console.warn("[TabGrouperAI] Engine lost, reloading...");
-        setStatus("loading", "Reconnecting to model...");
-        await init();
-        return groupTabs(tabs, true);
+    } else {
+      if (!engine) throw new Error("Engine not initialized");
+      let reply;
+      try {
+        reply = await engine.chat.completions.create({
+          messages,
+          temperature: 0.3,
+          max_tokens: 1024,
+        });
+      } catch (err) {
+        const msg = toMessage(err);
+        if (!retried && (msg.includes("Model not loaded") || msg.includes("BindingError"))) {
+          console.warn("[TabGrouperAI] Engine lost, reloading...");
+          setStatus("loading", "Reconnecting to model...");
+          await init();
+          return groupTabs(tabs, true);
+        }
+        throw err;
       }
-      throw err;
+      raw = reply.choices[0].message.content ?? "";
     }
 
-    const raw = reply.choices[0].message.content ?? "";
     return remapTabIds(extractJson(raw).groups, idMap);
   }
 
@@ -115,13 +147,14 @@ export function useEngine() {
     statusText,
     error,
     currentModel,
+    currentProvider,
     modelBadge,
     progress,
     setStatus,
     setError,
     clearError,
     init,
-    switchModel,
+    applyConfig,
     groupTabs,
     clearGroups,
   };

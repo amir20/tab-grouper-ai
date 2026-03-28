@@ -14,9 +14,10 @@ import {
   getCurrentTabs,
   applyGroups,
   extractJson,
-  getModel,
+  getProviderConfig,
   toMessage,
 } from "./config";
+import { chatCompletion } from "./openrouter";
 
 let handler: ExtensionServiceWorkerMLCEngineHandler | undefined;
 
@@ -48,13 +49,11 @@ async function ensureModelLoaded(): Promise<void> {
     throw new Error("Model not loaded — open the extension popup to download the model first.");
   }
 
-  const model = await getModel();
-  console.log("[TabGrouperAI] Loading model from shortcut:", model);
+  const config = await getProviderConfig();
+  console.log("[TabGrouperAI] Loading model from shortcut:", config.model);
   setBadge("…", "#6366f1");
-  await handler.engine.reload(model);
-  // Track loaded model so isModelLoaded() returns true.
-  // This mutates an internal property — may need updating if the library changes.
-  handler.modelId = [model];
+  await handler.engine.reload(config.model);
+  handler.modelId = [config.model];
   console.log("[TabGrouperAI] Model loaded");
 }
 
@@ -100,10 +99,7 @@ chrome.commands.onCommand.addListener(async (command) => {
   startSpinner();
 
   try {
-    await ensureModelLoaded();
-    const engine = getEngine();
-    if (!engine) throw new Error("Engine unavailable after model load");
-
+    const config = await getProviderConfig();
     const tabs = await getCurrentTabs();
     console.log("[TabGrouperAI] Shortcut: found", tabs.length, "ungrouped tabs");
     if (tabs.length === 0) {
@@ -113,16 +109,31 @@ chrome.commands.onCommand.addListener(async (command) => {
     }
 
     const { prompt: tabList, idMap } = buildTabPrompt(tabs);
-    const reply = await engine.chat.completions.create({
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: `Here are my open tabs:\n${tabList}\n\nGroup them:` },
-      ],
-      temperature: 0.3,
-      max_tokens: 1024,
-    });
+    const messages: { role: "system" | "user"; content: string }[] = [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: `Here are my open tabs:\n${tabList}\n\nGroup them:` },
+    ];
 
-    const raw = reply.choices[0].message.content ?? "";
+    let raw: string;
+
+    if (config.provider === "openrouter") {
+      if (!config.openrouterApiKey) throw new Error("OpenRouter API key not set. Open the popup to configure.");
+      raw = await chatCompletion(config.openrouterApiKey, config.openrouterModel, messages, {
+        temperature: 0.3,
+        max_tokens: 1024,
+      });
+    } else {
+      await ensureModelLoaded();
+      const engine = getEngine();
+      if (!engine) throw new Error("Engine unavailable after model load");
+      const reply = await engine.chat.completions.create({
+        messages,
+        temperature: 0.3,
+        max_tokens: 1024,
+      });
+      raw = reply.choices[0].message.content ?? "";
+    }
+
     console.log("[TabGrouperAI] Model response:", raw);
 
     const parsed = extractJson(raw);

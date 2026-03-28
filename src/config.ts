@@ -16,6 +16,15 @@ export interface GroupingResponse {
   groups: TabGroup[];
 }
 
+export type Provider = "local" | "openrouter";
+
+export interface ProviderConfig {
+  provider: Provider;
+  model: string;
+  openrouterApiKey: string;
+  openrouterModel: string;
+}
+
 export const DEFAULT_MODEL = "Qwen2.5-7B-Instruct-q4f16_1-MLC";
 
 export const AVAILABLE_MODELS = [
@@ -25,7 +34,33 @@ export const AVAILABLE_MODELS = [
   "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
 ];
 
+export const DEFAULT_OPENROUTER_MODEL = "google/gemini-2.5-flash";
+
+export const POPULAR_OPENROUTER_MODELS = [
+  "google/gemini-2.5-flash",
+  "anthropic/claude-sonnet-4",
+  "openai/gpt-4.1-mini",
+  "meta-llama/llama-4-maverick",
+  "deepseek/deepseek-chat-v3-0324",
+];
+
 export { default as SYSTEM_PROMPT } from "./system-prompt.txt?raw";
+
+export async function getProviderConfig(): Promise<ProviderConfig> {
+  const stored = await chrome.storage.local.get([
+    "provider", "model", "openrouterApiKey", "openrouterModel",
+  ]);
+  return {
+    provider: (stored.provider as Provider) || "local",
+    model: (stored.model as string) || DEFAULT_MODEL,
+    openrouterApiKey: (stored.openrouterApiKey as string) || "",
+    openrouterModel: (stored.openrouterModel as string) || DEFAULT_OPENROUTER_MODEL,
+  };
+}
+
+export async function saveProviderConfig(config: Partial<ProviderConfig>): Promise<void> {
+  await chrome.storage.local.set(config);
+}
 
 export async function getModel(): Promise<string> {
   const stored = await chrome.storage.local.get("model");

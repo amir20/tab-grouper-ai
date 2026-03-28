@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { getCurrentTabs, applyGroups, toMessage, type TabGroup } from "./config";
+import { getCurrentTabs, applyGroups, toMessage, type TabGroup, type Provider } from "./config";
 import { useEngine } from "./composables/useEngine";
 import StatusDot from "./components/StatusDot.vue";
 import ProgressBar from "./components/ProgressBar.vue";
@@ -46,9 +46,13 @@ async function handleClearGroups() {
   }
 }
 
-async function onModelSelect(model: string) {
+async function onApplyConfig(config: { provider: Provider; model?: string; openrouterApiKey?: string; openrouterModel?: string }) {
   showModelPicker.value = false;
-  await engine.switchModel(model);
+  try {
+    await engine.applyConfig(config);
+  } catch (err) {
+    engine.setError(toMessage(err));
+  }
 }
 
 onMounted(async () => {
@@ -69,7 +73,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="w-popup bg-bg text-text font-sans text-sm leading-normal antialiased">
+  <div v-if="!showModelPicker" class="w-popup bg-bg text-text font-sans text-sm leading-normal antialiased">
     <!-- Header -->
     <header class="flex items-center justify-between px-4 pt-3.5 pb-3 border-b border-divider">
       <div class="flex items-center gap-2.5">
@@ -92,7 +96,7 @@ onMounted(async () => {
 
     <!-- Tab count -->
     <div v-if="tabCount != null" class="px-4 py-2.5 text-text-secondary text-xs border-b border-divider">
-      <span class="text-text font-semibold">{{ tabCount }}</span> tabs in this window
+      <span class="text-text font-semibold">{{ tabCount }}</span> ungrouped tab{{ tabCount !== 1 ? "s" : "" }}
     </div>
 
     <!-- Action -->
@@ -125,11 +129,10 @@ onMounted(async () => {
       <button class="footer-link" @click="showModelPicker = true">Model</button>
     </footer>
 
-    <!-- Model picker -->
-    <Teleport to="body">
-      <ModelPicker v-if="showModelPicker" :current="currentModel" @select="onModelSelect" @close="showModelPicker = false" />
-    </Teleport>
   </div>
+
+  <!-- Model picker (replaces main UI) -->
+  <ModelPicker v-if="showModelPicker" @apply="onApplyConfig" @close="showModelPicker = false" />
 </template>
 
 <style scoped>
