@@ -18,12 +18,7 @@
 3. **Groups them by topic** — the model returns JSON with group names, colors, and tab assignments.
 4. **Applies Chrome tab groups** — each group gets a name and color using the `chrome.tabGroups` API.
 
-```
-┌─────────────────┐       ┌──────────────────────────┐       ┌──────────────┐
-│  Your open tabs  │──────▶│  LLM (local or cloud)    │──────▶│  Tab groups  │
-│  (ungrouped)     │       │  "Group these by topic"   │       │  applied     │
-└─────────────────┘       └──────────────────────────┘       └──────────────┘
-```
+`Your open tabs (ungrouped)` → `LLM (local or cloud)` → `Tab groups applied`
 
 The local model runs inside the **service worker**, so it stays loaded between popup opens. No re-download, no cold starts.
 
