@@ -29,7 +29,7 @@ async function doGroupTabs() {
     groups.value = applied;
     engine.setStatus("ready", `Done \u2014 ${applied.length} groups created`);
   } catch (err) {
-    console.error("[TabGrouperAI]", err);
+    console.error("[Gruper]", err);
     engine.setError(toMessage(err));
   } finally {
     working.value = false;
@@ -78,7 +78,7 @@ onMounted(async () => {
     <header class="flex items-center justify-between px-4 pt-3.5 pb-3 border-b border-divider">
       <div class="flex items-center gap-2.5">
         <div class="size-6 rounded-md bg-accent flex items-center justify-center text-sm text-white">&#x2B21;</div>
-        <span class="text-sm font-semibold tracking-tight">Tab Grouper AI</span>
+        <span class="text-sm font-semibold tracking-tight">Gruper</span>
       </div>
       <span class="text-2xs text-text-secondary bg-surface border border-divider px-2 py-0.5 rounded font-medium">
         {{ modelBadge }}

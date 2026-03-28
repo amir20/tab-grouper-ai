@@ -50,11 +50,11 @@ async function ensureModelLoaded(): Promise<void> {
   }
 
   const config = await getProviderConfig();
-  console.log("[TabGrouperAI] Loading model from shortcut:", config.model);
+  console.log("[Gruper] Loading model from shortcut:", config.model);
   setBadge("…", "#6366f1");
   await handler.engine.reload(config.model);
   handler.modelId = [config.model];
-  console.log("[TabGrouperAI] Model loaded");
+  console.log("[Gruper] Model loaded");
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -101,7 +101,7 @@ chrome.commands.onCommand.addListener(async (command) => {
   try {
     const config = await getProviderConfig();
     const tabs = await getCurrentTabs();
-    console.log("[TabGrouperAI] Shortcut: found", tabs.length, "ungrouped tabs");
+    console.log("[Gruper] Shortcut: found", tabs.length, "ungrouped tabs");
     if (tabs.length === 0) {
       stopSpinner();
       clearBadge();
@@ -134,21 +134,21 @@ chrome.commands.onCommand.addListener(async (command) => {
       raw = reply.choices[0].message.content ?? "";
     }
 
-    console.log("[TabGrouperAI] Model response:", raw);
+    console.log("[Gruper] Model response:", raw);
 
     const parsed = extractJson(raw);
     const remapped = remapTabIds(parsed.groups, idMap);
     const applied = await applyGroups(remapped, tabs);
 
     stopSpinner();
-    console.log("[TabGrouperAI] Applied", applied.length, "of", parsed.groups.length, "groups");
+    console.log("[Gruper] Applied", applied.length, "of", parsed.groups.length, "groups");
 
     if (applied.length > 0) {
       setBadge("✓", "#22c55e");
       chrome.notifications.create({
         type: "basic",
         iconUrl: chrome.runtime.getURL("icons/icon128.png"),
-        title: "Tab Grouper AI",
+        title: "Gruper",
         message: `Grouped ${tabs.length} tabs into ${applied.length} groups.`,
       });
     } else {
@@ -156,18 +156,18 @@ chrome.commands.onCommand.addListener(async (command) => {
       chrome.notifications.create({
         type: "basic",
         iconUrl: chrome.runtime.getURL("icons/icon128.png"),
-        title: "Tab Grouper AI",
+        title: "Gruper",
         message: "Model returned groups but no tab IDs matched. See service worker console.",
       });
     }
   } catch (err) {
-    console.error("[TabGrouperAI] Shortcut grouping failed:", err);
+    console.error("[Gruper] Shortcut grouping failed:", err);
     stopSpinner();
     setBadge("!", "#ef4444");
     chrome.notifications.create({
       type: "basic",
       iconUrl: chrome.runtime.getURL("icons/icon128.png"),
-      title: "Tab Grouper AI",
+      title: "Gruper",
       message: toMessage(err),
     });
   }

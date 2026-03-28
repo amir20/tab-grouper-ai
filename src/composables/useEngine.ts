@@ -120,7 +120,7 @@ export function useEngine() {
       } catch (err) {
         const msg = toMessage(err);
         if (!retried && (msg.includes("Model not loaded") || msg.includes("BindingError"))) {
-          console.warn("[TabGrouperAI] Engine lost, reloading...");
+          console.warn("[Gruper] Engine lost, reloading...");
           setStatus("loading", "Reconnecting to model...");
           await init();
           return groupTabs(tabs, true);

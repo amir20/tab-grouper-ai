@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="logo.svg" alt="Tab Grouper AI" width="128" height="128">
+  <img src="logo.svg" alt="Gruper" width="128" height="128">
 </p>
 
-<h1 align="center">Tab Grouper AI</h1>
+<h1 align="center">Gruper</h1>
 
 <p align="center">
   A browser extension that automatically groups your open tabs using AI.<br>

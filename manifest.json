@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Tab Grouper AI",
+  "name": "Gruper",
   "version": "0.1.0",
   "description": "Automatically group your tabs using a local AI model — no server required.",
   "permissions": [
@@ -32,7 +32,7 @@
   },
   "action": {
     "default_popup": "src/popup.html",
-    "default_title": "Tab Grouper AI",
+    "default_title": "Gruper",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",

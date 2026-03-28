@@ -24,8 +24,8 @@ export async function chatCompletion(
     headers: {
       "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json",
-      "HTTP-Referer": "https://github.com/nicedoctor/tab-grouper-ai",
-      "X-Title": "Tab Grouper AI",
+      "HTTP-Referer": "https://github.com/nicedoctor/gruper",
+      "X-Title": "Gruper",
     },
     body: JSON.stringify({
       model,
