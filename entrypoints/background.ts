@@ -1,4 +1,4 @@
-import { defineBackground } from "wxt/sandbox";
+import { defineBackground } from "wxt/utils/define-background";
 import {
   MLCEngine,
   ExtensionServiceWorkerMLCEngineHandler,
