@@ -11,6 +11,11 @@ export default defineConfig({
     webExtension({ disableAutoLaunch: true }),
   ],
   build: {
+    watch: {
+      watcher: {
+        usePolling: true,
+      },
+    },
     outDir: "dist",
     emptyOutDir: true,
     // WebLLM uses WASM — don't try to inline it

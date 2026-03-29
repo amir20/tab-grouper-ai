@@ -46,7 +46,12 @@ async function handleClearGroups() {
   }
 }
 
-async function onApplyConfig(config: { provider: Provider; model?: string; openrouterApiKey?: string; openrouterModel?: string }) {
+async function onApplyConfig(config: {
+  provider: Provider;
+  model?: string;
+  openrouterApiKey?: string;
+  openrouterModel?: string;
+}) {
   showModelPicker.value = false;
   try {
     await engine.applyConfig(config);
@@ -62,7 +67,9 @@ onMounted(async () => {
     await engine.init();
   } catch (err) {
     if (toMessage(err).includes("unload")) {
-      try { await engine.init(); } catch (e) {
+      try {
+        await engine.init();
+      } catch (e) {
         engine.setError(toMessage(e));
       }
     } else {
@@ -81,7 +88,7 @@ onMounted(async () => {
         <span class="text-sm font-semibold tracking-tight">Gruper</span>
       </div>
       <span class="text-2xs text-text-secondary bg-surface border border-divider px-2 py-0.5 rounded font-medium">
-        {{ modelBadge }}
+        {{ modelBadge }}ss
       </span>
     </header>
 
@@ -96,22 +103,22 @@ onMounted(async () => {
 
     <!-- Tab count -->
     <div v-if="tabCount != null" class="px-4 py-2.5 text-text-secondary text-xs border-b border-divider">
-      <span class="text-text font-semibold">{{ tabCount }}</span> ungrouped tab{{ tabCount !== 1 ? "s" : "" }}
+      <span class="text-text font-semibold">{{ tabCount }}</span>
+      ungrouped tab{{ tabCount !== 1 ? "s" : "" }}
     </div>
 
     <!-- Action -->
     <div class="px-4 py-3.5">
-      <button
-        :disabled="status !== 'ready' || working"
-        class="btn-primary"
-        @click="doGroupTabs"
-      >
+      <button :disabled="status !== 'ready' || working" class="btn-primary" @click="doGroupTabs">
         {{ working ? "Working..." : "Group Tabs" }}
       </button>
     </div>
 
     <!-- Error -->
-    <div v-if="error" class="mx-4 mb-3 p-2.5 bg-danger/8 border border-danger/18 rounded-md text-danger text-2xs whitespace-pre-wrap max-h-36 overflow-y-auto">
+    <div
+      v-if="error"
+      class="mx-4 mb-3 p-2.5 bg-danger/8 border border-danger/18 rounded-md text-danger text-2xs whitespace-pre-wrap max-h-36 overflow-y-auto"
+    >
       {{ error }}
     </div>
 
@@ -128,7 +135,6 @@ onMounted(async () => {
       <button class="footer-link" @click="handleClearGroups">Clear groups</button>
       <button class="footer-link" @click="showModelPicker = true">Model</button>
     </footer>
-
   </div>
 
   <!-- Model picker (replaces main UI) -->

@@ -25,13 +25,19 @@ export interface ProviderConfig {
   openrouterModel: string;
 }
 
-export const DEFAULT_MODEL = "Qwen2.5-7B-Instruct-q4f16_1-MLC";
+export const DEFAULT_MODEL = "Qwen2.5-3B-Instruct-q4f16_1-MLC";
 
-export const AVAILABLE_MODELS = [
-  "Qwen2.5-7B-Instruct-q4f16_1-MLC",
-  "Llama-3.1-8B-Instruct-q4f16_1-MLC",
-  "Qwen2.5-3B-Instruct-q4f16_1-MLC",
-  "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
+export interface ModelOption {
+  id: string;
+  recommended?: boolean;
+}
+
+export const AVAILABLE_MODELS: ModelOption[] = [
+  { id: "Qwen2.5-3B-Instruct-q4f16_1-MLC", recommended: true },
+  { id: "Qwen2.5-7B-Instruct-q4f16_1-MLC" },
+  { id: "Llama-3.1-8B-Instruct-q4f16_1-MLC" },
+  { id: "Phi-3.5-mini-instruct-q4f16_1-MLC" },
+  { id: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC" },
 ];
 
 export const DEFAULT_OPENROUTER_MODEL = "google/gemini-2.5-flash";

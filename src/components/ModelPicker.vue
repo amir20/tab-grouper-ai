@@ -5,6 +5,7 @@ import {
   POPULAR_OPENROUTER_MODELS,
   getProviderConfig,
   type Provider,
+  type ModelOption,
 } from "../config";
 
 const emit = defineEmits<{
@@ -86,14 +87,15 @@ function save() {
         <div class="flex flex-col gap-1.5">
           <button
             v-for="model in AVAILABLE_MODELS"
-            :key="model"
+            :key="model.id"
             class="w-full text-left px-3 py-2 rounded-md text-xs border transition-colors cursor-pointer"
-            :class="model === localModel
+            :class="model.id === localModel
               ? 'bg-accent/15 border-accent/30 text-accent'
               : 'bg-bg border-divider text-text-secondary hover:bg-surface-hover hover:text-text'"
-            @click="localModel = model"
+            @click="localModel = model.id"
           >
-            {{ model }}
+            {{ model.id }}
+            <span v-if="model.recommended" class="ml-1 text-[10px] text-accent/70">(recommended)</span>
           </button>
         </div>
       </template>
