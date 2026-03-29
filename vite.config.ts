@@ -3,6 +3,8 @@ import tailwindcss from "@tailwindcss/vite";
 import vue from "@vitejs/plugin-vue";
 import webExtension from "vite-plugin-web-extension";
 
+const isWatch = process.argv.includes("--watch");
+
 export default defineConfig({
   base: "",
   plugins: [
@@ -11,11 +13,6 @@ export default defineConfig({
     webExtension({ disableAutoLaunch: true }),
   ],
   build: {
-    watch: {
-      watcher: {
-        usePolling: true,
-      },
-    },
     outDir: "dist",
     emptyOutDir: true,
     // WebLLM uses WASM — don't try to inline it
@@ -23,5 +20,8 @@ export default defineConfig({
     // Suppress the large chunk warning — @mlc-ai/web-llm is ~6MB and
     // must be inlined into each entry (service worker can't use shared chunks).
     chunkSizeWarningLimit: 6000,
+    watch: isWatch
+      ? { watcher: { usePolling: true } }
+      : null,
   },
 });
