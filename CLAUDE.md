@@ -6,13 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 pnpm install          # Install dependencies (pnpm 10.33+)
-pnpm build            # Production build → dist/
-pnpm dev              # Watch mode — rebuilds on file changes
+pnpm build            # Chrome production build → .output/chrome-mv3/
+pnpm build:firefox    # Firefox production build → .output/firefox-mv2/
+pnpm dev              # Chrome dev mode with HMR
+pnpm dev:firefox      # Firefox dev mode with HMR
 pnpm typecheck        # TypeScript validation (tsc --noEmit)
-pnpm package          # Build + zip dist/ for distribution
+pnpm zip              # Build + zip for Chrome
+pnpm zip:firefox      # Build + zip for Firefox
 ```
 
-After building, load `dist/` as an unpacked extension in `chrome://extensions` (Developer mode). Reload the extension after each rebuild.
+After building, load `.output/chrome-mv3/` as an unpacked extension in `chrome://extensions` (Developer mode). For Firefox, load `.output/firefox-mv2/` via `about:debugging`.
 
 No linter or test framework is configured.
 
@@ -22,30 +25,34 @@ This is a Manifest V3 browser extension (Vue 3 + TypeScript + Tailwind v4) that 
 
 ### Two entry points
 
-- **Service worker** (`src/service-worker.ts`) — Hosts the WebLLM engine, handles keyboard shortcut (Alt+Shift+G), and manages Chrome port connections. The model stays loaded here between popup opens.
-- **Popup** (`src/popup.ts` → `src/App.vue`) — Vue 3 app for the UI. Communicates with the service worker via `chrome.runtime.connect()` port messaging.
+- **Background** (`entrypoints/background.ts`) — Hosts the WebLLM engine, handles keyboard shortcut (Alt+Shift+G), and manages Chrome port connections. Wrapped in WXT's `defineBackground()`.
+- **Popup** (`entrypoints/popup/main.ts` → `entrypoints/popup/App.vue`) — Vue 3 app for the UI. Communicates with the service worker via `chrome.runtime.connect()` port messaging.
 
 ### Core flow
 
-1. `getCurrentTabs()` in `config.ts` queries ungrouped, unpinned tabs from the current window
-2. `buildTabPrompt()` in `config.ts` maps Chrome's large tab IDs to short sequential IDs (1, 2, 3…) and formats them for the LLM
-3. The LLM (local or cloud) receives the tab list + system prompt (`src/system-prompt.txt`) and returns JSON groupings
-4. `extractJson()` in `config.ts` parses the response, handling common LLM JSON mistakes (markdown fences, unquoted keys, missing wrapper)
+1. `getCurrentTabs()` in `utils/config.ts` queries ungrouped, unpinned tabs from the current window
+2. `buildTabPrompt()` in `utils/config.ts` maps Chrome's large tab IDs to short sequential IDs (1, 2, 3…) and formats them for the LLM
+3. The LLM (local or cloud) receives the tab list + system prompt (`assets/system-prompt.txt`) and returns JSON groupings
+4. `extractJson()` in `utils/config.ts` parses the response, handling common LLM JSON mistakes (markdown fences, unquoted keys, missing wrapper)
 5. `remapTabIds()` converts short IDs back to real Chrome tab IDs
-6. `applyGroups()` in `config.ts` calls `chrome.tabs.group()` and `chrome.tabGroups.update()` to create named, colored groups
+6. `applyGroups()` in `utils/config.ts` calls `chrome.tabs.group()` and `chrome.tabGroups.update()` to create named, colored groups
 
 ### Two LLM providers
 
 - **Local (WebLLM)** — `@mlc-ai/web-llm` runs quantized models on GPU via WebGPU inside the service worker. The popup creates an engine connection via `CreateExtensionServiceWorkerMLCEngine`. The `ExtensionServiceWorkerMLCEngineHandler` in the service worker relays messages.
-- **Cloud (OpenRouter)** — `src/openrouter.ts` makes direct HTTP calls to OpenRouter's OpenAI-compatible endpoint. Requires user-provided API key stored in `chrome.storage.local`.
+- **Cloud (OpenRouter)** — `utils/openrouter.ts` makes direct HTTP calls to OpenRouter's OpenAI-compatible endpoint. Requires user-provided API key stored in `chrome.storage.local`.
+
+### Multi-browser support
+
+Built with WXT framework. Targets Chrome and Firefox from the same codebase. Browser-specific builds via `pnpm build` (Chrome) and `pnpm build:firefox` (Firefox). WebLLM local inference may not work on Firefox due to limited WebGPU support — the extension gracefully falls back to suggesting OpenRouter.
 
 ### Key composable
 
-`src/composables/useEngine.ts` — Reactive Vue composable that manages engine lifecycle, provider switching, model loading progress, tab grouping calls, and error state. This is the main orchestrator used by the popup UI.
+`composables/useEngine.ts` — Reactive Vue composable that manages engine lifecycle, provider switching, model loading progress, tab grouping calls, and error state. This is the main orchestrator used by the popup UI.
 
 ### Config & storage
 
-Provider choice, model ID, and OpenRouter API key are persisted in `chrome.storage.local`. Config read/write helpers are in `config.ts`.
+Provider choice, model ID, and OpenRouter API key are persisted in `chrome.storage.local`. Config read/write helpers are in `utils/config.ts`.
 
 ## Important constraints
 
