@@ -31,12 +31,12 @@ export const DEFAULT_MODEL = "Qwen2.5-3B-Instruct-q4f16_1-MLC";
 
 export interface ModelOption {
   id: string;
-  recommended?: boolean;
+  tag?: string;
 }
 
 export const AVAILABLE_MODELS: ModelOption[] = [
-  { id: "Qwen2.5-3B-Instruct-q4f16_1-MLC", recommended: true },
-  { id: "Qwen2.5-7B-Instruct-q4f16_1-MLC" },
+  { id: "Qwen2.5-3B-Instruct-q4f16_1-MLC", tag: "fastest" },
+  { id: "Qwen2.5-7B-Instruct-q4f16_1-MLC", tag: "higher quality" },
   { id: "Llama-3.1-8B-Instruct-q4f16_1-MLC" },
   { id: "Phi-3.5-mini-instruct-q4f16_1-MLC" },
   { id: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC" },

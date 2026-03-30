@@ -88,14 +88,14 @@ function save() {
           <button
             v-for="model in AVAILABLE_MODELS"
             :key="model.id"
-            class="w-full text-left px-3 py-2 rounded-md text-xs border transition-colors cursor-pointer"
+            class="w-full flex justify-between items-center px-3 py-2 rounded-md text-xs border transition-colors cursor-pointer"
             :class="model.id === localModel
               ? 'bg-accent/15 border-accent/30 text-accent'
               : 'bg-bg border-divider text-text-secondary hover:bg-surface-hover hover:text-text'"
             @click="localModel = model.id"
           >
-            {{ model.id }}
-            <span v-if="model.recommended" class="ml-1 text-[10px] text-accent/70">(recommended)</span>
+            <span>{{ model.id }}</span>
+            <span v-if="model.tag" class="text-[10px] text-accent/70">{{ model.tag }}</span>
           </button>
         </div>
       </template>
