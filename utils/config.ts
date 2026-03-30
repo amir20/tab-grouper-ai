@@ -4,6 +4,10 @@
 
 import { browser } from "wxt/browser";
 
+// Prefer chrome.* when available (works in Chrome, Dia, and other Chromium forks).
+// WXT's browser polyfill can pick up a broken browser.* namespace in some forks.
+const api = globalThis.chrome ?? browser;
+
 export type TabGroupColor =
   | "grey" | "blue" | "red" | "yellow" | "green"
   | "pink" | "purple" | "cyan" | "orange";
@@ -55,7 +59,7 @@ export const POPULAR_OPENROUTER_MODELS = [
 export { default as SYSTEM_PROMPT } from "@/assets/system-prompt.txt?raw";
 
 export async function getProviderConfig(): Promise<ProviderConfig> {
-  const stored = await browser.storage.local.get([
+  const stored = await api.storage.local.get([
     "provider", "model", "openrouterApiKey", "openrouterModel",
   ]);
   return {
@@ -67,11 +71,11 @@ export async function getProviderConfig(): Promise<ProviderConfig> {
 }
 
 export async function saveProviderConfig(config: Partial<ProviderConfig>): Promise<void> {
-  await browser.storage.local.set(config);
+  await api.storage.local.set(config);
 }
 
 export async function getModel(): Promise<string> {
-  const stored = await browser.storage.local.get("model");
+  const stored = await api.storage.local.get("model");
   return (stored.model as string) || DEFAULT_MODEL;
 }
 
@@ -113,19 +117,19 @@ export function remapTabIds(groups: TabGroup[], idMap: Map<number, number>): Tab
 export async function getCurrentTabs(): Promise<chrome.tabs.Tab[]> {
   // Find the last focused normal window — "currentWindow" from a service worker
   // context may resolve to a DevTools or popup window which can't have tab groups.
-  const lastFocused = await browser.windows.getLastFocused().catch(() => undefined);
+  const lastFocused = await api.windows.getLastFocused().catch(() => undefined);
   let windowId = lastFocused?.id;
 
   // If the focused window isn't a normal window, find one that is
   if (!lastFocused || lastFocused.type !== "normal" || windowId == null) {
-    const allWindows = await browser.windows.getAll({ windowTypes: ["normal"] });
+    const allWindows = await api.windows.getAll({ windowTypes: ["normal"] });
     if (allWindows.length === 0) return [];
     windowId = allWindows[0].id;
     if (windowId == null) return [];
   }
 
-  const tabs = await browser.tabs.query({ windowId });
-  return tabs.filter((t) => t.groupId === browser.tabGroups.TAB_GROUP_ID_NONE && !t.pinned);
+  const tabs = await api.tabs.query({ windowId });
+  return tabs.filter((t) => t.groupId === api.tabGroups.TAB_GROUP_ID_NONE && !t.pinned);
 }
 
 /**
@@ -184,17 +188,21 @@ export async function applyGroups(groups: TabGroup[], allTabs: chrome.tabs.Tab[]
 
     const color: TabGroupColor = VALID_COLORS.has(group.color) ? group.color : "grey";
 
-    const groupId = await browser.tabs.group({
-      tabIds: ids as [number, ...number[]],
-      createProperties: windowId ? { windowId } : undefined,
-    });
-    await browser.tabGroups.update(groupId, {
-      title: group.name,
-      color,
-      collapsed: false,
-    });
+    try {
+      const groupId = await api.tabs.group({
+        tabIds: ids as [number, ...number[]],
+        createProperties: windowId ? { windowId } : undefined,
+      });
+      await api.tabGroups.update(groupId, {
+        title: group.name,
+        color,
+        collapsed: false,
+      });
 
-    applied.push({ ...group, tabIds: ids });
+      applied.push({ ...group, tabIds: ids });
+    } catch (err) {
+      console.warn("[Gruper] Failed to apply group", group.name, err);
+    }
   }
 
   return applied;

@@ -1,5 +1,7 @@
 import { ref, computed } from "vue";
 import { browser } from "wxt/browser";
+
+const api = globalThis.chrome ?? browser;
 import {
   CreateExtensionServiceWorkerMLCEngine,
   type ExtensionServiceWorkerMLCEngine,
@@ -140,11 +142,11 @@ export function useEngine() {
   }
 
   async function clearGroups(): Promise<void> {
-    const tabGroups = await browser.tabGroups.query({ windowId: browser.windows.WINDOW_ID_CURRENT });
+    const tabGroups = await api.tabGroups.query({ windowId: api.windows.WINDOW_ID_CURRENT });
     for (const g of tabGroups) {
-      const tabs = await browser.tabs.query({ groupId: g.id });
+      const tabs = await api.tabs.query({ groupId: g.id });
       const ids = tabs.map((t) => t.id).filter((id): id is number => id !== undefined);
-      if (ids.length > 0) await browser.tabs.ungroup(ids as [number, ...number[]]);
+      if (ids.length > 0) await api.tabs.ungroup(ids as [number, ...number[]]);
     }
   }
 
